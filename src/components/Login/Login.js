@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useReducer, useContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  useReducer,
+  useContext,
+  useRef,
+} from "react";
 
 import Card from "../UI/Card/Card";
 import classes from "./Login.module.css";
@@ -34,15 +40,17 @@ const Login = (props) => {
   // const [passwordIsValid, setPasswordIsValid] = useState();
   const [emailState, dispatchEmail] = useReducer(emailReducer, {
     value: "",
-    isValid: true,
+    isValid: null,
   });
   const [passwordState, dispatchPassword] = useReducer(passwordReducer, {
     value: "",
-    isValid: true,
+    isValid: null,
   });
   const [formIsValid, setFormIsValid] = useState(false);
 
   const authCtx = useContext(AuthContext);
+  const emailInputRef = useRef();
+  const passwordInputRef = useRef();
 
   useEffect(() => {
     const identifier = setTimeout(() => {
@@ -58,8 +66,6 @@ const Login = (props) => {
 
   const emailChangeHandler = (event) => {
     dispatchEmail({ type: "EMAIL_INPUT", val: event.target.value });
-
-    setFormIsValid(emailState.isValid && passwordState.isValid);
   };
 
   const passwordChangeHandler = (event) => {
@@ -75,14 +81,22 @@ const Login = (props) => {
   };
 
   const submitHandler = (event) => {
+    if (formIsValid) {
+      authCtx.onLogin(emailState.value, passwordState.value);
+    } else if (!emailState.isValid) {
+      emailInputRef.current.focus();
+    } else {
+      passwordInputRef.current.focus();
+    }
+
     event.preventDefault();
-    authCtx.onLogin(emailState.value, passwordState.value);
   };
 
   return (
     <Card className={classes.login}>
       <form onSubmit={submitHandler}>
         <Input
+          ref={emailInputRef}
           inputState={emailState}
           type="email"
           label="E-Mail"
@@ -90,6 +104,7 @@ const Login = (props) => {
           validationHandler={validateEmailHandler}
         />
         <Input
+          ref={passwordInputRef}
           inputState={passwordState}
           type="password"
           label="Password"
@@ -97,7 +112,7 @@ const Login = (props) => {
           validationHandler={validatePasswordHandler}
         />
         <div className={classes.actions}>
-          <Button type="submit" className={classes.btn} disabled={!formIsValid}>
+          <Button type="submit" className={classes.btn}>
             Login
           </Button>
         </div>
